@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="jc-viewport" id="wrapper" tabindex="-1">
+      <svg class="jc-grid" aria-hidden="true">
+        <defs>
+          <pattern id="canvas-dots" patternUnits="userSpaceOnUse" width="20" height="20">
+            <circle cx="0.7" cy="0.7" r="0.7"></circle>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#canvas-dots)"></rect>
+      </svg>
+      <div class="jc-world" id="canvas"></div>
+      <div class="jc-controls">
+        <div class="jc-control-group">
+          <button class="jc-control" data-action="mode" title="Canvas settings" aria-label="Canvas settings"></button>
+        </div>
+        <div class="jc-control-group">
+          <button class="jc-control" data-action="zoom-in" data-icon="plus" title="Zoom in" aria-label="Zoom in"></button>
+          <button class="jc-control" data-action="reset" data-icon="reset" title="Reset zoom" aria-label="Reset zoom"></button>
+          <button class="jc-control" data-action="fit" data-icon="fit" title="Zoom to fit (Shift+1)" aria-label="Zoom to fit"></button>
+          <button class="jc-control" data-action="zoom-out" data-icon="minus" title="Zoom out" aria-label="Zoom out"></button>
+        </div>
+        <div class="jc-control-group is-history">
+          <button class="jc-control" data-action="undo" data-icon="undo" title="Undo" aria-label="Undo"></button>
+          <button class="jc-control" data-action="redo" data-icon="redo" title="Redo" aria-label="Redo"></button>
+        </div>
+        <div class="jc-control-group">
+          <button class="jc-control" data-action="help" data-icon="help" title="Canvas help" aria-label="Canvas help"></button>
+        </div>
+      </div>
+      <div class="jc-dock">
+        <div class="jc-dock-button" data-kind="card" data-icon="sticky-note" title="Drag to add card"></div>
+        <div class="jc-dock-button" data-kind="note" data-icon="file-text" title="Drag to add note from vault"></div>
+        <div class="jc-dock-button" data-kind="media" data-icon="file-image" title="Drag to add media from vault"></div>
+      </div>
+      <div class="jc-help" id="help" role="dialog" aria-label="Canvas help">
+        <h4>Canvas</h4>
+        <div class="jc-help-row"><span class="jc-help-label">Add a card</span><span><kbd>Double-click</kbd> the canvas, or drag from the toolbar</span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Edit a card</span><span><kbd>Double-click</kbd> · <kbd>Enter</kbd></span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Connect cards</span><span>Drag from a card's edge dot</span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Select several</span><span><kbd>Drag</kbd> on the canvas · <kbd>Shift</kbd>+<kbd>Click</kbd></span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Duplicate while dragging</span><span><kbd>Alt</kbd>+<kbd>Drag</kbd></span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Nudge</span><span><kbd>Arrows</kbd> · <kbd>Shift</kbd>+<kbd>Arrows</kbd></span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Pan</span><span><kbd>Scroll</kbd> · <kbd>Space</kbd>+<kbd>Drag</kbd> · middle-drag</span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Zoom</span><span><kbd>Ctrl</kbd>+<kbd>Scroll</kbd> · <kbd>Space</kbd>+<kbd>Scroll</kbd> · pinch</span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Zoom to fit / selection</span><span><kbd>Shift</kbd>+<kbd>1</kbd> · <kbd>Shift</kbd>+<kbd>2</kbd></span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Undo / redo</span><span><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd></span></div>
+        <div class="jc-help-row"><span class="jc-help-label">Save</span><span><kbd>Ctrl</kbd>+<kbd>S</kbd> (or Orca's autosave)</span></div>
+      </div>
+      <div class="jc-toast" id="toast" role="status"></div>
+    </div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

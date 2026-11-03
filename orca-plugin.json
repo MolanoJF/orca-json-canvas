@@ -1,0 +1,70 @@
+{
+    "manifestVersion":  2,
+    "id":  "json-canvas",
+    "name":  "JSON Canvas",
+    "version":  "1.0.0",
+    "description":  "View and edit Obsidian-compatible .canvas boards in Orca: cards, notes, images, groups and connections, with the same look, navigation and file format.",
+    "license":  "MIT",
+    "repository":  "https://github.com/MolanoJF/orca-json-canvas",
+    "engines":  {
+                    "orca":  "\u003e=1.4.246"
+                },
+    "execution":  "trusted-worker",
+    "pluginApi":  1,
+    "main":  "worker/main.js",
+    "contributes":  {
+                        "customEditors":  [
+                                              {
+                                                  "id":  "canvas",
+                                                  "title":  "Canvas",
+                                                  "extensions":  [
+                                                                     ".canvas"
+                                                                 ],
+                                                  "entry":  "editor/index.html",
+                                                  "priority":  "default"
+                                              }
+                                          ],
+                        "settings":  [
+                                         {
+                                             "key":  "vaultFolders",
+                                             "title":  "Extra vault folders",
+                                             "type":  "string",
+                                             "default":  "",
+                                             "multiline":  true,
+                                             "placeholder":  "One absolute folder per line. Only needed when a vault is not an Orca workspace."
+                                         }
+                                     ]
+                    },
+    "capabilities":  [
+                         {
+                             "kind":  "workspace:read"
+                         },
+                         {
+                             "kind":  "settings:own"
+                         }
+                     ],
+    "cover":  {
+                  "path":  "images/cover.png",
+                  "alt":  "A demo canvas with Markdown notes, image cards, colored groups and connections in dark mode."
+              },
+    "screenshots":  [
+                        {
+                            "path":  "images/editing.png",
+                            "alt":  "Editing a text card with a wiki link completion popup.",
+                            "caption":  "Edit cards with Markdown live preview and note suggestions.",
+                            "theme":  "dark"
+                        },
+                        {
+                            "path":  "images/light-selection.png",
+                            "alt":  "Two selected cards and their color palette in light mode.",
+                            "caption":  "Select, arrange and color cards in light or dark mode.",
+                            "theme":  "light"
+                        },
+                        {
+                            "path":  "images/note-picker.png",
+                            "alt":  "The note picker over a canvas board.",
+                            "caption":  "Link notes from your local vault.",
+                            "theme":  "dark"
+                        }
+                    ]
+}

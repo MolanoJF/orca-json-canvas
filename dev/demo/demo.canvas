@@ -1,0 +1,22 @@
+{
+	"nodes":[
+		{"id":"g-research","type":"group","x":-40,"y":-60,"width":760,"height":700,"color":"5","label":"Research"},
+		{"id":"g-ideas","type":"group","x":800,"y":-60,"width":640,"height":700,"color":"6","label":"Ideas"},
+		{"id":"g-next","type":"group","x":1520,"y":-60,"width":500,"height":700,"color":"4","label":"Next steps"},
+		{"id":"title","type":"text","text":"# Riverside pavilion\nA board for the concept phase. Double-click anywhere to add a card.","x":-40,"y":-240,"width":760,"height":120},
+		{"id":"site","type":"file","file":"assets/site-plan.svg","x":0,"y":0,"width":420,"height":263},
+		{"id":"brief","type":"file","file":"notes/Design brief.md","x":460,"y":0,"width":220,"height":420},
+		{"id":"facts","type":"text","text":"## Site facts\n- **Flood line** 1.2 m above path\n- Prevailing wind from the **north-west**\n- Mature trees to keep: ==3==","x":0,"y":300,"width":420,"height":300},
+		{"id":"section","type":"file","file":"assets/section.svg","x":840,"y":0,"width":560,"height":315},
+		{"id":"idea1","type":"text","text":"### Lifted deck\nTimber deck on screw piles, so the river can pass underneath.","x":840,"y":360,"width":270,"height":240,"color":"2"},
+		{"id":"idea2","type":"text","text":"### Folded roof\nOne folded plane gives shade *and* collects rain.\n\n> [!tip] Test\n> Check it against the wind study.","x":1130,"y":360,"width":270,"height":240},
+		{"id":"todo","type":"text","text":"## To do\n- [x] Site visit\n- [ ] Wind study\n- [ ] Timber supplier quote\n- [ ] Model at 1:50\n\nSee [[Design brief]] #pavilion","x":1560,"y":0,"width":420,"height":340,"color":"4"},
+		{"id":"deadline","type":"text","text":"**Review:** 16 November","x":1560,"y":400,"width":420,"height":80,"color":"1"}
+	],
+	"edges":[
+		{"id":"e1","fromNode":"facts","fromSide":"right","toNode":"idea1","toSide":"left","label":"informs"},
+		{"id":"e2","fromNode":"section","fromSide":"bottom","toNode":"idea2","toSide":"top","color":"6"},
+		{"id":"e3","fromNode":"idea2","fromSide":"right","toNode":"todo","toSide":"left","color":"4"},
+		{"id":"e4","fromNode":"brief","fromSide":"top","toNode":"section","toSide":"top","toEnd":"arrow"}
+	]
+}

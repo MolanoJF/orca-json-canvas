@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#e9efe6"/>
+  <path d="M0 300 C120 270 220 330 340 300 S560 250 640 280 L640 400 L0 400Z" fill="#9cc3d5"/>
+  <path d="M0 320 C140 295 230 350 360 322 S560 275 640 300" fill="none" stroke="#6fa3bd" stroke-width="3"/>
+  <g fill="#c9d8bf"><circle cx="80" cy="90" r="34"/><circle cx="130" cy="70" r="26"/><circle cx="560" cy="110" r="40"/><circle cx="505" cy="80" r="24"/></g>
+  <rect x="230" y="140" width="190" height="96" rx="6" fill="#f7f3ea" stroke="#4a4a4a" stroke-width="3"/>
+  <path d="M230 140 L325 96 L420 140" fill="none" stroke="#4a4a4a" stroke-width="3"/>
+  <rect x="300" y="190" width="48" height="46" fill="#d9a066"/>
+  <path d="M120 250 Q250 205 300 236" fill="none" stroke="#b08968" stroke-width="6" stroke-dasharray="2 12" stroke-linecap="round"/>
+  <text x="24" y="380" font-family="Segoe UI, sans-serif" font-size="20" fill="#2f4f5f">Riverside site · concept plan</text>
+</svg>

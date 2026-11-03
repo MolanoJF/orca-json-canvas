@@ -1,0 +1,6 @@
+{ "name": "cm-build", "private": true, "type": "module",
+  "dependencies": {
+    "@codemirror/state": "^6", "@codemirror/view": "^6", "@codemirror/commands": "^6",
+    "@codemirror/language": "^6", "@codemirror/lang-markdown": "^6", "@lezer/highlight": "^1",
+    "@lezer/markdown": "^1", "@codemirror/autocomplete": "^6", "esbuild": "^0.25"
+  } }

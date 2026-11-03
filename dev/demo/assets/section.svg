@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#f4f1ea"/>
+  <path d="M40 260 H600" stroke="#6b6b6b" stroke-width="2"/>
+  <path d="M40 260 L40 300 L600 300 L600 260" fill="#d8cfc0"/>
+  <path d="M150 260 V150 L320 90 L490 150 V260" fill="#fffdf8" stroke="#333" stroke-width="3"/>
+  <path d="M120 160 L320 72 L520 160" fill="none" stroke="#333" stroke-width="5" stroke-linecap="round"/>
+  <g stroke="#9a8f7f" stroke-width="2"><path d="M200 260 V170"/><path d="M260 260 V140"/><path d="M380 260 V140"/><path d="M440 260 V170"/></g>
+  <rect x="290" y="200" width="60" height="60" fill="#e2b07a"/>
+  <path d="M560 250 q20 -40 0 -80 q-20 40 0 80" fill="#9dbf8e"/>
+  <text x="40" y="335" font-family="Segoe UI, sans-serif" font-size="18" fill="#555">Section A–A · timber frame, lifted floor</text>
+</svg>
