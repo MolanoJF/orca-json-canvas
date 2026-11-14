@@ -1,26 +1,39 @@
 # JSON Canvas for Orca
 
-View and edit Obsidian-compatible `.canvas` boards inside Orca. Requires Orca 1.4.246 or later.
+Open, read and edit Obsidian-compatible `.canvas` boards inside Orca. Cards, notes, images, groups
+and connections look, navigate and save like they do in Obsidian, so a board keeps working in
+both tools. Requires Orca 1.4.246 or later.
 
-![JSON Canvas showing a demo board with notes, images, groups and connections](images/cover.png)
+![JSON Canvas showing a demo board with notes, images, groups, a table and connections](images/cover.png)
+
+| | |
+| --- | --- |
+| ![Editing a card with live Markdown preview and a note suggestion popup](images/editing.png) | ![Dragging a new connection between two cards](images/connecting.png) |
+| Live Markdown preview and `[[note]]` suggestions | Drag from an edge dot to connect cards |
+| ![Selecting cards and choosing a color, in light mode](images/light-selection.png) | ![Adding a note from the vault with the note picker](images/note-picker.png) |
+| Light and dark, matching Orca's theme | Add notes and media from your vault |
 
 ## Install
 
-Find **JSON Canvas** by **MolanoJF** in Orca's community plugin marketplace, install it, and
-approve its trusted worker. Open a `.canvas` file and choose the **Canvas** view beside **Source**.
+1. In Orca, open **Settings → Plugins** and find **JSON Canvas** by **MolanoJF** in the community
+   marketplace.
+2. Install it and approve its trusted worker (see *Permissions* below).
+3. Open any `.canvas` file and choose the **Canvas** view beside **Source**.
 
-The worker runs with your user account's access to the machine. It reads workspace information
-and its own settings, resolves local images and notes, and can write Markdown notes you edit
-inline. There is no telemetry. See **How it works** below for vault selection.
+The raw JSON always stays available in the **Source** tab.
+
+## Permissions and privacy
+
+The worker is a small Node process that runs with your user account's access to the machine, which
+is why Orca asks you to approve it. It reads workspace information and its own settings, resolves
+local images and notes, and writes only the Markdown notes you edit inline, and only inside a
+known vault. The editor frame is sandboxed (no file system, no network). There is no telemetry.
 
 This is an independent project, not affiliated with or endorsed by Obsidian.
 
-Opens Obsidian `.canvas` (JSON Canvas) files in an Orca editor tab that looks, navigates and edits
-like Obsidian's canvas. Files are saved in Obsidian's own format (tab-indented, one card per line,
-same key order), to keep diffs small when moving between editors.
-
-**Saving:** edits mark the Orca tab as modified; press **Ctrl+S** to write the file (Orca does not
-let plugins save on their own). The raw JSON stays available in Orca's **Source** tab.
+**Saving:** edits mark the Orca tab as modified; press **Ctrl+S** (Cmd+S on macOS) to write the
+file. Orca does not let plugins save on their own. Files are written in Obsidian's own format
+(tab-indented, one card per line, same key order) to keep diffs small when moving between editors.
 
 ## Editing (as in Obsidian)
 
@@ -84,6 +97,10 @@ alongside the code.
 
 To preview the included demo without installing the plugin:
 
+```bash
+VAULT="$PWD/dev/demo" ORCA_CLI="$(command -v orca)" node dev/harness.mjs dev/demo/demo.canvas 5179
+```
+
 ```powershell
 $env:VAULT = (Resolve-Path dev/demo).Path
 $env:ORCA_CLI = (Get-Command orca).Source
@@ -101,3 +118,15 @@ npx esbuild entry.js --bundle --format=esm --minify --outfile=../../editor/vendo
 
 Validate before releasing with `orca plugin validate . --json`. Releases are version tags
 matching `orca-plugin.json`; the `orca-plugin` repository topic enables marketplace discovery.
+
+Run the tests with `npm test`.
+
+## Feedback
+
+Bug reports and feature requests are welcome in
+[GitHub issues](https://github.com/MolanoJF/orca-json-canvas/issues). For rendering bugs, attach
+the `.canvas` file (or a trimmed copy) and your Orca version.
+
+## License
+
+MIT. See [LICENSE](LICENSE); bundled third-party notices are in `editor/`.

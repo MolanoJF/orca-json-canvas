@@ -11,12 +11,18 @@
 		{"id":"idea1","type":"text","text":"### Lifted deck\nTimber deck on screw piles, so the river can pass underneath.","x":840,"y":360,"width":270,"height":240,"color":"2"},
 		{"id":"idea2","type":"text","text":"### Folded roof\nOne folded plane gives shade *and* collects rain.\n\n> [!tip] Test\n> Check it against the wind study.","x":1130,"y":360,"width":270,"height":240},
 		{"id":"todo","type":"text","text":"## To do\n- [x] Site visit\n- [ ] Wind study\n- [ ] Timber supplier quote\n- [ ] Model at 1:50\n\nSee [[Design brief]] #pavilion","x":1560,"y":0,"width":420,"height":340,"color":"4"},
+		{"id":"g-open","type":"group","x":-40,"y":700,"width":2060,"height":330,"color":"3","label":"Open questions"},
+		{"id":"q1","type":"text","text":"## To confirm\n- Is the **2019 flood line** still valid?\n- Who owns the north bank?\n- Can piles go through the old culvert?","x":0,"y":780,"width":420,"height":200},
+		{"id":"q2","type":"text","text":"## Budget\n| Item | Est. |\n| --- | --- |\n| Piles | 18 k |\n| Timber | 42 k |\n| Roof | 25 k |","x":460,"y":780,"width":380,"height":200,"color":"3"},
+		{"id":"q3","type":"text","text":"## Decision log\n- [x] Open on three sides\n- [x] Demountable frame\n- [ ] Roof geometry, see [[Design brief]]","x":880,"y":780,"width":380,"height":200},
+		{"id":"q4","type":"text","text":"> [!warning] Heads-up\n> Planning review is on ==16 November==. Anything unresolved goes to the next round.","x":1560,"y":780,"width":420,"height":200,"color":"1"},
 		{"id":"deadline","type":"text","text":"**Review:** 16 November","x":1560,"y":400,"width":420,"height":80,"color":"1"}
 	],
 	"edges":[
 		{"id":"e1","fromNode":"facts","fromSide":"right","toNode":"idea1","toSide":"left","label":"informs"},
 		{"id":"e2","fromNode":"section","fromSide":"bottom","toNode":"idea2","toSide":"top","color":"6"},
 		{"id":"e3","fromNode":"idea2","fromSide":"right","toNode":"todo","toSide":"left","color":"4"},
+		{"id":"e5","fromNode":"facts","fromSide":"bottom","toNode":"q1","toSide":"top"},
 		{"id":"e4","fromNode":"brief","fromSide":"top","toNode":"section","toSide":"top","toEnd":"arrow"}
 	]
 }
