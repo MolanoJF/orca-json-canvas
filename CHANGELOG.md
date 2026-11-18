@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+- Image paste is more robust: if Orca does not send the frame a paste event for Ctrl/Cmd+V, or the
+  event hides the image, the editor reads the clipboard directly.
+- A paste that finds nothing usable now says what the clipboard held instead of doing nothing,
+  and logs it to `orca plugin logs`.
+
 ## 1.1.0
 
 - Paste images onto the canvas (Ctrl+V or right-click → Paste). They are saved to a `Sources/`

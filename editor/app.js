@@ -2663,22 +2663,30 @@ function copySelection(cut = false) {
   if (cut) deleteSelection()
 }
 
-async function pasteFromClipboard(at) {
+async function pasteFromClipboard(at, eventTypes = []) {
+  let seen = eventTypes
   try {
     const files = []
-    for (const item of (await navigator.clipboard.read?.()) ?? []) {
+    const items = (await navigator.clipboard.read?.()) ?? []
+    seen = items.flatMap((item) => item.types)
+    for (const item of items) {
       const type = item.types.find((t) => PASTE_IMAGE_TYPES.has(t))
       if (type) files.push(new File([await item.getType(type)], '', { type }))
     }
     if (files.length) return pasteImages(files, at)
-  } catch {}
+  } catch (error) {
+    reportError(`clipboard.read failed: ${error.name}: ${error.message}`)
+  }
   let text = null
   try {
     text = await navigator.clipboard.readText()
   } catch {}
   text ??= localClipboard
   if (text) pasteText(text, at)
-  else toast('Press Ctrl+V to paste.')
+  else {
+    reportError(`paste found nothing usable; clipboard types: ${seen.join(', ') || 'none visible'}`)
+    toast(seen.length ? `Can't paste that: the clipboard holds ${seen.join(', ')}.` : "Couldn't read the clipboard. Copy the image again and press Ctrl+V with the canvas focused.", 6000)
+  }
 }
 
 function duplicateSelection() {
@@ -2714,9 +2722,30 @@ document.addEventListener('paste', (e) => {
     return
   }
   const text = e.clipboardData?.getData('text/plain') || localClipboard
-  if (!text) return
+  if (!text) {
+    // Nothing the event carries is usable (some hosts hide image data from the frame). Try
+    // reading the clipboard directly, and say what was there if that fails too.
+    e.preventDefault()
+    pasteFromClipboard(state.pointer, Array.from(e.clipboardData?.types ?? []))
+    return
+  }
   e.preventDefault()
   pasteText(text, state.pointer)
+})
+
+// Some hosts handle Ctrl/Cmd+V themselves and never send the frame a paste event. If a paste
+// shortcut produces none, read the clipboard directly.
+let pasteEventSeen = false
+document.addEventListener('paste', () => (pasteEventSeen = true), true)
+window.addEventListener('keydown', (e) => {
+  if (e.key?.toLowerCase() !== 'v' || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return
+  if (isModalOpen() || isMenuOpen() || editingTarget(e.target) || !isEditable()) return
+  pasteEventSeen = false
+  setTimeout(() => {
+    if (pasteEventSeen) return
+    reportError('paste shortcut produced no paste event; reading the clipboard directly')
+    pasteFromClipboard(state.pointer)
+  }, 200)
 })
 
 // ---- Keyboard ----------------------------------------------------------------------------------
