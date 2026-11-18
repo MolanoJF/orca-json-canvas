@@ -6,7 +6,8 @@
 //   - resolves file nodes and [[wikilinks]] the way Obsidian does
 //   - streams images/media to the frame in chunks (plugin.request answers are capped at 1 MiB)
 //   - opens notes and files in an Orca tab
-// File reads and inline Markdown edits stay inside a known vault root.
+// File reads and inline Markdown edits stay inside a known vault root. The only other write is a
+// pasted image, saved into a `Sources/` folder beside the canvas (never overwriting a file).
 
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
@@ -19,6 +20,20 @@ const ROOTS_TTL_MS = 30_000
 const INDEX_TTL_MS = 60_000
 const INDEX_MAX_FILES = 200_000
 const IS_WIN = process.platform === 'win32'
+const SOURCES_DIR = 'Sources'
+const PASTE_MAX_BYTES = 20 * 1024 * 1024
+const CANVAS_SCAN_MAX = 400
+const CANVAS_SCAN_BYTES = 4 * 1024 * 1024
+
+// Pasted images: allowed types, with the leading bytes a real file of that type has.
+const PASTE_TYPES = {
+  'image/png': { ext: 'png', magic: (b) => b.length > 8 && b.readUInt32BE(0) === 0x89504e47 },
+  'image/jpeg': { ext: 'jpg', magic: (b) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  'image/gif': { ext: 'gif', magic: (b) => b.length > 6 && b.toString('latin1', 0, 3) === 'GIF' },
+  'image/webp': { ext: 'webp', magic: (b) => b.length > 12 && b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP' },
+  'image/bmp': { ext: 'bmp', magic: (b) => b.length > 2 && b.toString('latin1', 0, 2) === 'BM' },
+  'image/avif': { ext: 'avif', magic: (b) => b.length > 12 && b.toString('latin1', 4, 8) === 'ftyp' }
+}
 
 const MIME = {
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp',
@@ -443,6 +458,95 @@ export default function activate(orca) {
     await fs.rename(tmp, abs)
     const after = await fs.stat(abs)
     return { done: true, mtime: after.mtimeMs, size: after.size }
+  })
+
+  // Finds the folder that holds the canvas, as a vault-relative path ('' is the vault root).
+  // Orca does not give the frame the file's path, so: use `canvasPath` when the host supplied one
+  // (absolute path or file: URL), otherwise pick the single .canvas file in the vault that shares
+  // the most node ids with the open board. A tie returns { dir: null, ambiguous: true }.
+  handle('canvas.locateCanvas', async ({ root, canvasPath, nodeIds = [] }) => {
+    const r = await requireRoot(orca, root)
+    if (typeof canvasPath === 'string' && canvasPath) {
+      let abs = canvasPath
+      if (/^file:/i.test(abs)) {
+        try {
+          abs = decodeURIComponent(new URL(abs).pathname)
+          if (IS_WIN) abs = abs.replace(/^\/([a-z]:)/i, '$1')
+        } catch {}
+      }
+      if (path.isAbsolute(abs)) {
+        const rel = path.relative(r.root, path.dirname(abs))
+        if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) return { dir: toPosix(rel), via: 'path' }
+      }
+    }
+    const ids = new Set(nodeIds.filter((x) => typeof x === 'string').slice(0, 500))
+    if (!ids.size) return { dir: null, ambiguous: false, via: 'none' }
+    indexes.delete(r.key)
+    const index = await getIndex(r)
+    const canvases = index.files.filter((f) => extOf(f) === 'canvas').slice(0, CANVAS_SCAN_MAX)
+    const scored = []
+    for (const rel of canvases) {
+      try {
+        const abs = await insideRoot(r, rel)
+        const stat = await fs.stat(abs)
+        if (stat.size > CANVAS_SCAN_BYTES) continue
+        const nodes = JSON.parse(await fs.readFile(abs, 'utf8'))?.nodes
+        if (!Array.isArray(nodes)) continue
+        const score = nodes.reduce((n, node) => n + (ids.has(node?.id) ? 1 : 0), 0)
+        if (score) scored.push({ rel, score })
+      } catch {}
+    }
+    if (!scored.length) return { dir: null, ambiguous: false, via: 'none' }
+    scored.sort((a, b) => b.score - a.score)
+    if (scored.length > 1 && scored[1].score === scored[0].score) return { dir: null, ambiguous: true, via: 'ids' }
+    return { dir: toPosix(path.posix.dirname(scored[0].rel)).replace(/^\.$/, ''), via: 'ids' }
+  })
+
+  // Saves a pasted image to <canvas folder>/Sources/. Parts arrive base64-encoded (plugin.request
+  // inputs are capped at 64 KiB). Only known image types, checked by content, are written; an
+  // existing file is never overwritten (a numeric suffix is added instead).
+  const pendingImages = new Map()
+  handle('canvas.writeImage', async ({ root, dir = '', name, mime, token, part = 0, parts = 1, base64 = '' }) => {
+    const type = PASTE_TYPES[String(mime ?? '').toLowerCase()]
+    if (!type) throw fail('not_permitted', 'only PNG, JPEG, GIF, WebP, BMP and AVIF images can be pasted')
+    if (typeof token !== 'string' || !token) throw fail('invalid_params', 'token is required')
+    const r = await requireRoot(orca, root)
+    const key = `${r.key}\0${token}`
+    const pending = pendingImages.get(key) ?? { at: Date.now(), chunks: [], size: 0 }
+    pending.chunks[part] = String(base64)
+    pending.size += String(base64).length * 0.75
+    if (pending.size > PASTE_MAX_BYTES * 1.1) {
+      pendingImages.delete(key)
+      throw fail('too_large', `images over ${PASTE_MAX_BYTES / 1024 / 1024} MB can't be pasted`)
+    }
+    pendingImages.set(key, pending)
+    for (const [k, v] of pendingImages) if (Date.now() - v.at > 5 * 60_000) pendingImages.delete(k)
+    if (pending.chunks.filter((c) => c !== undefined).length < parts) return { done: false }
+    pendingImages.delete(key)
+
+    const bytes = Buffer.from(pending.chunks.join(''), 'base64')
+    if (!bytes.length || bytes.length > PASTE_MAX_BYTES) throw fail('too_large', `images over ${PASTE_MAX_BYTES / 1024 / 1024} MB can't be pasted`)
+    if (!type.magic(bytes)) throw fail('not_permitted', `the pasted data is not a valid ${type.ext.toUpperCase()} image`)
+
+    // The canvas folder must already exist inside the vault; Sources/ is created under it.
+    const canvasDir = dir ? await insideRoot(r, dir) : await fs.realpath(r.root)
+    if (!(await isDir(canvasDir))) throw fail('not_permitted', 'the canvas folder does not exist')
+    const sources = path.join(canvasDir, SOURCES_DIR)
+    await fs.mkdir(sources, { recursive: true })
+    const realSources = await insideRoot(r, toPosix(path.relative(r.root, sources)))
+    if (path.dirname(realSources) !== canvasDir) throw fail('not_permitted', 'Sources must be a real folder beside the canvas')
+
+    const stem = String(name ?? '').replace(/\.[^.]*$/, '').replace(/[\\/:*?"<>|#^\[\]\x00-\x1f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Pasted image'
+    for (let i = 0; i < 1000; i++) {
+      const file = `${stem}${i ? ` ${i + 1}` : ''}.${type.ext}`
+      try {
+        await fs.writeFile(path.join(realSources, file), bytes, { flag: 'wx' })
+        return { done: true, path: toPosix(path.relative(r.root, path.join(realSources, file))), size: bytes.length }
+      } catch (error) {
+        if (error.code !== 'EEXIST') throw error
+      }
+    }
+    throw fail('action_failed', 'could not find a free file name in Sources')
   })
 
   handle('canvas.read', async ({ root, path: rel, offset = 0 }) => {

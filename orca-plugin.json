@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "json-canvas",
   "name": "JSON Canvas",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "View and edit Obsidian-compatible .canvas boards in Orca: cards, notes, images, groups and connections, with the same look, navigation and file format.",
   "license": "MIT",
   "repository": "https://github.com/MolanoJF/orca-json-canvas",

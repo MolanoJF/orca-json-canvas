@@ -124,6 +124,8 @@ const state = {
   viewKey: null,
   vault: null,
   vaultPromise: null,
+  canvasDir: null, // folder of the canvas, vault-relative; found on the first image paste
+  docMeta: null,
   generation: 0,
   readonly: false,
   docReadOnly: false,
@@ -2549,6 +2551,104 @@ wrapper.addEventListener('contextmenu', (e) => {
   )
 })
 
+// ---- Pasted images -----------------------------------------------------------------------------
+// An image on the clipboard is saved to Sources/ beside the .canvas file and added as a file card.
+
+const PASTE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp', 'image/avif'])
+const PASTE_PART_CHARS = 48 * 1024 // base64 characters per request (inputs are capped at 64 KiB)
+let pastingImages = false
+
+function pastedImageFiles(dataTransfer) {
+  const out = []
+  for (const f of dataTransfer?.files ?? []) if (PASTE_IMAGE_TYPES.has(f.type)) out.push(f)
+  if (!out.length) {
+    for (const item of dataTransfer?.items ?? []) {
+      const f = item.kind === 'file' && PASTE_IMAGE_TYPES.has(item.type) ? item.getAsFile() : null
+      if (f) out.push(f)
+    }
+  }
+  return out
+}
+
+function hostDocumentPath() {
+  const d = state.docMeta
+  const v = d?.path ?? d?.filePath ?? d?.uri ?? d?.file?.path ?? d?.file?.uri
+  return typeof v === 'string' ? v : undefined
+}
+
+// The canvas's folder, relative to the vault ('' is the vault root); null when it can't be told.
+async function ensureCanvasDir(vault) {
+  if (state.canvasDir != null) return state.canvasDir
+  const found = await call('canvas.locateCanvas', {
+    root: vault.root,
+    canvasPath: hostDocumentPath(),
+    nodeIds: state.data.nodes.map((n) => n.id)
+  })
+  if (found?.dir == null) return found?.ambiguous ? 'ambiguous' : null
+  state.canvasDir = found.dir
+  return found.dir
+}
+
+const pad2 = (n) => String(n).padStart(2, '0')
+function pastedImageName(index) {
+  const d = new Date()
+  const stamp = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`
+  return `Pasted image ${stamp}${index ? ` ${index + 1}` : ''}`
+}
+
+async function saveImageFile(vault, dir, file, index) {
+  const buffer = new Uint8Array(await file.arrayBuffer())
+  let binary = ''
+  for (let i = 0; i < buffer.length; i += 0x8000) binary += String.fromCharCode(...buffer.subarray(i, i + 0x8000))
+  const base64 = btoa(binary)
+  const parts = Math.max(1, Math.ceil(base64.length / PASTE_PART_CHARS))
+  const token = `${Date.now()}-${index}-${Math.random().toString(36).slice(2)}`
+  const name = file.name && !/^image\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name) ? file.name : pastedImageName(index)
+  let result
+  for (let part = 0; part < parts; part++) {
+    result = await call('canvas.writeImage', {
+      root: vault.root, dir, name, mime: file.type, token, part, parts,
+      base64: base64.slice(part * PASTE_PART_CHARS, (part + 1) * PASTE_PART_CHARS)
+    })
+  }
+  return result?.path
+}
+
+async function pasteImages(files, at) {
+  if (!isEditable() || pastingImages) return
+  pastingImages = true
+  try {
+    const vault = await ensureVault()
+    if (!vault) return
+    const dir = await ensureCanvasDir(vault)
+    if (dir === 'ambiguous') {
+      toast("Several canvases share these cards, so the image folder is unclear. Press Ctrl+S to save, then paste again.", 8000)
+      return
+    }
+    if (dir == null) {
+      toast("Couldn't tell which folder this canvas is in. Press Ctrl+S to save the canvas once, then paste again.", 8000)
+      return
+    }
+    toast(files.length > 1 ? `Saving ${files.length} images to Sources…` : 'Saving image to Sources…', 20_000)
+    let added = 0
+    for (const [i, file] of files.entries()) {
+      try {
+        const saved = await saveImageFile(vault, dir, file, i)
+        if (!saved) continue
+        filesCache = null
+        createFileNode({ x: at.x + i * 40, y: at.y + i * 40 }, saved)
+        added++
+      } catch (error) {
+        toast(`Couldn't save the image: ${error.message}`, 8000)
+        reportError(`paste image failed: ${error.message}`)
+      }
+    }
+    if (added) toast(added > 1 ? `Added ${added} images from Sources.` : 'Image saved to Sources.')
+  } finally {
+    pastingImages = false
+  }
+}
+
 // ---- Clipboard ---------------------------------------------------------------------------------
 
 let localClipboard = null
@@ -2564,6 +2664,14 @@ function copySelection(cut = false) {
 }
 
 async function pasteFromClipboard(at) {
+  try {
+    const files = []
+    for (const item of (await navigator.clipboard.read?.()) ?? []) {
+      const type = item.types.find((t) => PASTE_IMAGE_TYPES.has(t))
+      if (type) files.push(new File([await item.getType(type)], '', { type }))
+    }
+    if (files.length) return pasteImages(files, at)
+  } catch {}
   let text = null
   try {
     text = await navigator.clipboard.readText()
@@ -2599,6 +2707,12 @@ document.addEventListener('cut', (e) => {
 })
 document.addEventListener('paste', (e) => {
   if (editingTarget(e.target) || !isEditable()) return
+  const images = pastedImageFiles(e.clipboardData)
+  if (images.length) {
+    e.preventDefault()
+    pasteImages(images, state.pointer)
+    return
+  }
   const text = e.clipboardData?.getData('text/plain') || localClipboard
   if (!text) return
   e.preventDefault()
@@ -2817,6 +2931,7 @@ applyView()
 updateModeUI()
 updateHistoryButtons()
 orca.document.onDidChange((doc) => {
+  state.docMeta = doc
   if (typeof doc?.version === 'number') state.docVersion = doc.version
   setDocReadOnly(!!doc?.readOnly)
   if (doc?.content?.kind !== 'text') return

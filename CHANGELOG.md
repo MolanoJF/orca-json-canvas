@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- Paste images onto the canvas (Ctrl+V or right-click → Paste). They are saved to a `Sources/`
+  folder beside the `.canvas` file, created on demand, and added as image cards. Files are never
+  overwritten; only PNG, JPEG, GIF, WebP, BMP and AVIF up to 20 MB are accepted, checked by content.
+- New worker calls `canvas.locateCanvas` (finds the canvas's folder) and `canvas.writeImage`.
+- The worker may now write pasted images as well as inline Markdown edits; both stay inside the vault.
+
 ## 1.0.1
 
 - Refreshed marketplace listing: new cover and four distinct screenshots (editing, connecting,

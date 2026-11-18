@@ -26,8 +26,8 @@ The raw JSON always stays available in the **Source** tab.
 
 The worker is a small Node process that runs with your user account's access to the machine, which
 is why Orca asks you to approve it. It reads workspace information and its own settings, resolves
-local images and notes, and writes only the Markdown notes you edit inline, and only inside a
-known vault. The editor frame is sandboxed (no file system, no network). There is no telemetry.
+local images and notes, and writes only the Markdown notes you edit inline and the images you paste (into a `Sources/`
+folder beside the canvas, never over an existing file), and only inside a known vault. The editor frame is sandboxed (no file system, no network). There is no telemetry.
 
 This is an independent project, not affiliated with or endorsed by Obsidian.
 
@@ -50,7 +50,7 @@ file. Orca does not let plugins save on their own. Files are written in Obsidian
 | Edit a label | Double-click a group label or an edge |
 | Color, group, align, line direction, background | Selection menu above the selection |
 | Delete | Delete / Backspace |
-| Copy, cut, paste | Ctrl+C / Ctrl+X / Ctrl+V (pasted text or URLs become cards) |
+| Copy, cut, paste | Ctrl+C / Ctrl+X / Ctrl+V (pasted text or URLs become cards; pasted images are saved and become image cards) |
 | Undo / redo | Ctrl+Z / Ctrl+Shift+Z, or the buttons on the right |
 | Read-only | Gear → Read-only; the lock turns editing back on |
 | Snapping | Gear → Snap to grid / Snap to objects (guides show while dragging) |
@@ -59,6 +59,18 @@ The card editor is CodeMirror with Obsidian-style live preview: markdown marks h
 line you are on, `[[` suggests notes from the vault, Ctrl+B / Ctrl+I toggle bold and italic, lists
 continue on Enter. Double-clicking a note card edits the note itself; that writes the `.md` file
 directly, and refuses if the note changed on disk meanwhile.
+
+## Pasting images
+
+Paste an image (a screenshot, or one copied from a browser or another app) and it is saved as a
+new file in a `Sources/` folder next to the `.canvas` file, then added as an image card at the
+pointer. `Sources/` is created on the first paste. Files are named `Pasted image <timestamp>.png`
+(or keep the copied file's name), and an existing file is never overwritten. PNG, JPEG, GIF, WebP,
+BMP and AVIF up to 20 MB are accepted.
+
+Orca does not tell the editor where the `.canvas` file is, so the worker finds the board by
+matching its card ids against the `.canvas` files in the vault. If the board is new and unsaved,
+or two canvases are copies of each other, the paste asks you to press Ctrl+S once and try again.
 
 ## Viewing
 
